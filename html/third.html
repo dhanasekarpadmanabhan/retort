@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <title></title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="../node_modules/vue/dist/vue.js"></script>
+    <style >
+
+
+.container{
+padding: 25px;
+}
+    </style>
+</head>
+
+<body>
+  <div class="container">
+    <div id='content'>
+        <div v-if='show'>
+            <part1></part1>
+        </div>
+        <div v-if="show1">
+            <part2></part2>
+        </div>
+        <button v-on:click='testMethod'>submit</button>
+        <div v-if="show2">
+            Enter the gate pass no to validate <input type="text" v-model="msg" placeholder="Search for the particular gate pass in the specific range">
+            <table bgcolor="orange" border="1px solid black" cellpadding=1 class="table">
+              <thead class="thead-inverse">  <tr>
+
+                    <th>CCode</th>
+                    <th>Gate Pass no</th>
+                    <th>Gate Pass Date</th>
+                    <th>Product _ Name</th>
+                    <th>ml/s</th>
+                    <th>Batch_No</th>
+                    <th>Rate</th>
+                    <th>Mrp</th>
+                    <th>Mfg_Date</th>
+                    <th>Exp_Date</th>
+                    <th>Qty</th>
+
+                </tr></thead>
+                <tbody>
+                <tr v-for="obj in funtfilt">
+                    <td>{{obj.CCode}}</td>
+                    <td>{{obj.GPNo}}</td>
+                    <td>{{obj.GPDate}}</td>
+                    <td>{{obj.ItemCd}}</td>
+                    <td>{{obj.Unit}}</td>
+                    <td>{{obj.BatchNo}}</td>
+                    <td>{{obj.Rate}}</td>
+                    <td>{{obj.MRP}}</td>
+                    <td>{{obj.MfgDt}}</td>
+                    <td>{{obj.ExpDt}}</td>
+                    <td>{{obj.Qty}}</td>
+                </tr>
+</tbody>
+            </table>
+        </div>
+    </div>
+  </div>
+    <script type="text/javascript" src="../node_modules/array/dist/array.js"></script>
+
+
+    <script>
+        const {
+            app,
+            BrowserWindow,
+            Menu,
+            shell
+        } = require('electron').remote
+        const electron = require('electron');
+        const remote = require('electron').remote
+        const {
+            ipcRenderer
+        } = electron;
+        const $ = require('jquery')
+
+        var check = new Vue({
+            el: "#content",
+            data: {
+                show: false,
+                show1: false,
+                show2: false,
+                msg: '',
+                object1: []
+            },
+            methods: {
+                testMethod: function() {
+
+                    if (check.show == true) {
+                        $val = {
+                            Invo: $("#no").val(),
+                            retort: $("#retort").val()
+                        }
+                        let mainV = ipcRenderer.send('item:invo', $val)
+                        var window = remote.getCurrentWindow();
+                        window.close();
+                    } else {
+                        gatep1 = {
+                            gate1: $("#no").val(),
+                            date: $("#date").val()
+                        }
+                        //  let mainV = ipcRenderer.send('item:gate', gatepass)
+                        gatepass(gatep1)
+                    }
+                }
+            },
+            computed: {
+                funtfilt: function() {
+                    return this.object1.filter((obj) => {
+                        if (obj.GPNo == this.msg) {
+                            return obj;
+                        } else if (this.msg == "") {
+                            return obj;
+                        }
+                    })
+                }
+            }
+        });
+
+        function gatepass(arg) {
+            field1 = ''
+
+            if (arg.gate1 == "") {
+                field1 = "GPDate  between  '" + arg.date + "' and  curdate()"
+
+            } else {
+                field1 = "GPNo = " + arg.gate1 + ""
+            }
+            var field = "SELECT * "
+            var from = "FROM `gatepass` ";
+            var where = " WHERE  " + field1;
+            var order = " ORDER BY 'GPDATE' DESC"
+            var query = field + from + where + order;
+            console.log(query)
+            j1 = new Promise(function(resolve, reject) {
+                resolve(selectquery1(query))
+            });
+
+            //      j1 = selectquery(field,from,where,order,this);
+            //this will send the value to ipcRenderer with item:add of second.html file
+            j1.then(function(result) {
+
+                check.object1 = result;
+
+
+            })
+        }
+
+        function selectquery1(query) {
+            return new Promise(function(resolve, reject) {
+                var connection = connect1();
+                // connect to mysql
+                connection.connect(function(err) {
+                    // in case of error
+                    if (err) {
+                        console.log(err.code);
+                        console.log(err.fatal);
+                    }
+                });
+                h = ""
+                $query = query;
+                console.log($query)
+                connection.query($query, function(err, rows, fields) {
+                    if (err) {
+                        console.log("An error ocurred performing the query.");
+                        console.log(err);
+                        return;
+                    }
+                    h = rows;
+
+                    resolve(rows);
+                });
+            });
+        }
+
+        function connect1() {
+            var mysql = require('mysql');
+            var con = mysql.createConnection({
+                host: 'localhost',
+                user: 'root',
+                password: null,
+                database: 'retort sample'
+            });
+            return con;
+        }
+
+        Vue.component('part2', {
+            template: "<div><h1>Gate_Pass_Details</h1><label for='username' class='icon-user'> Enter the Gate pass No<span class='required'>*</span></label>  <input type='text' name='no' id='no' required='required' placeholder='gate_pass no' /><br>Enter the approximate date from the current date<input id='date' type='date'></div>"
+        })
+
+        Vue.component('part1', {
+            template: "<div><h1>Invoice_Details</h1><label>Select the industry</label><select id='retort'><option value = ''>Select the industry</option><option value = '01'>Pharmaceuticals</option> <option value = '02'>Laboratory</option><option value = '03'>K.C.Corp</option></select></p><p><label for='username' class='icon-user'> Enter the Invoice No<span class='required'>*</span></label>  <input type='text' name='no' id='no' required='required' placeholder='Invo_No' /></div>"
+            //  template:'<h1>Invoice_Details</h1><p><label>Select the industry</label><select id='retort'><option value = '01'>Pharmaceuticals</option><option value = '02'>Laboratory</option><option value = '03'>K.C.Corp</option></select></p><p><label for='username' class='icon-user'> Enter the Invoice No<span class='required'>*</span></label><input type='text' name='no' id='no' required='required' placeholder='"+Invo_No+"' /></p>    <input type='submit' id='submit' value=' Submit! '/>'
+        })
+
+
+
+
+        ipcRenderer.on('item:details', function(e, val) {
+            if (val == "sample") {
+                check.show = false;
+                check.show1 = true;
+                check.show2 = true;
+            } else if(val =="sales") {
+                check.show1 = false;
+                check.show2 = false;
+                check.show = true;
+            }
+        })
+        $(document).ready(function() {
+            ipcRenderer.send("item:sales/invoice", "l")
+        });
+    </script>
+</body>
+</html>

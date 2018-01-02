@@ -1,0 +1,26 @@
+{
+  "name": "electron_quick_start",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "and": "0.0.0",
+    "array": "^0.4.3",
+    "array-includes": "^3.0.3",
+    "electron": "^1.7.9",
+    "electron-squirrel-startup": "^1.0.0",
+    "install": "^0.10.2",
+    "jquery": "^3.2.1",
+    "mysql": "^2.15.0",
+    "node": "^9.3.0",
+    "node-array": "0.0.7",
+    "npm": "^5.6.0",
+    "vue": "^2.5.13",
+    "vue-cli": "^2.9.2"
+  }
+}
